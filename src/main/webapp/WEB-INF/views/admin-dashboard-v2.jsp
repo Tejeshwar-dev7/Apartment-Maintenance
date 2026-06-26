@@ -43,9 +43,9 @@
         <article class="panel collection-card">
             <div class="section-heading"><span class="section-icon">₹</span><div><h2>Collection Overview</h2><p>Premium dashboard view for paid, due and processing invoices.</p></div></div>
             <div class="collection-layout">
-                <div class="collection-metric danger"><span>Outstanding</span><strong>Rs. ${stats['Due Payments']} bills</strong><small>Unpaid invoices</small></div>
-                <div class="big-ring"><span>June<br>2026</span></div>
-                <div class="collection-metric success"><span>Collected</span><strong>${stats['Completed Complaints']} jobs</strong><small>Completed work</small></div>
+                <div class="collection-metric danger"><span>Outstanding</span><strong>Rs. ${paymentAnalytics.dueAmount}</strong><small>${paymentAnalytics.dueCount} unpaid bills</small></div>
+                <div class="big-ring" style="background: ${paymentAnalytics.ringStyle}"><span>June<br>2026</span></div>
+                <div class="collection-metric success"><span>Collected</span><strong>Rs. ${paymentAnalytics.paidAmount}</strong><small>${paymentAnalytics.paidCount} paid bills</small></div>
             </div>
             <div class="avatar-stack">
                 <span>A-101</span><span>B-204</span><span>C-302</span><span>+${stats['Registered Flats']}</span>
@@ -53,15 +53,21 @@
         </article>
         <article class="panel occupancy-card">
             <div class="section-heading"><span class="section-icon">O</span><div><h2>Occupancy Statistics</h2><p>Flat database snapshot for admin review.</p></div></div>
-            <div class="occupancy-row"><div><strong>${stats['Registered Flats']}</strong><span>Registered</span></div><div><strong>${stats['Due Payments']}</strong><span>Due Bills</span></div><div class="mini-ring"></div></div>
+            <div class="occupancy-row"><div><strong>${occupancyAnalytics.occupied}</strong><span>Occupied</span></div><div><strong>${occupancyAnalytics.vacant}</strong><span>Vacant</span></div><div class="mini-ring" style="background: ${occupancyAnalytics.ringStyle}"></div></div>
         </article>
         <article class="panel maintenance-chart">
             <div class="section-heading"><span class="section-icon">M</span><div><h2>Open Maintenance Request</h2><p>Graphical complaint status overview.</p></div></div>
-            <div class="request-counts"><div><strong>${stats['Open Complaints']}</strong><span>Open Request</span></div><div><strong>${stats['Completed Complaints']}</strong><span>Completed</span></div></div>
+            <div class="request-counts"><div><strong>${complaintStatusAnalytics.open}</strong><span>Open Request</span></div><div><strong>${complaintStatusAnalytics.completed}</strong><span>Completed</span></div></div>
             <div class="bar-chart" aria-label="Maintenance category chart">
-                <span style="height:34%"></span><span style="height:72%"></span><span style="height:48%"></span><span style="height:86%"></span><span style="height:56%"></span><span style="height:38%"></span>
+                <c:forEach items="${complaintCategoryAnalytics}" var="cat">
+                    <span style="height:${cat.height}%" title="${cat.category}: ${cat.count}"></span>
+                </c:forEach>
             </div>
-            <div class="chart-labels"><span>Water</span><span>Lift</span><span>Repair</span><span>Clean</span><span>Elec</span><span>Other</span></div>
+            <div class="chart-labels">
+                <c:forEach items="${complaintCategoryAnalytics}" var="cat">
+                    <span>${cat.category}</span>
+                </c:forEach>
+            </div>
         </article>
     </section>
 
@@ -74,7 +80,7 @@
                     <select><option>Not Grouped</option><option>Grouped by Flat</option><option>Grouped by Status</option></select>
                     <a class="export-link" href="#payment-details">Export</a>
                 </div>
-                <div class="showing-row"><strong>Showing</strong><span>${stats['Due Payments']} due invoices</span></div>
+                <div class="showing-row"><strong>Showing</strong><span>${paymentAnalytics.dueCount} due invoices</span></div>
                 <div class="table-wrap invoice-table"><table>
                     <thead><tr><th>Property/Shared By</th><th>Due On</th><th>Paid On</th><th>ID</th><th>Status</th><th>Unit</th><th>Amount</th><th>Processing</th><th>Paid</th><th>Balance</th></tr></thead>
                     <tbody>
@@ -98,14 +104,14 @@
             <aside class="income-summary">
                 <button type="button">New Invoice</button>
                 <div class="donut-card">
-                    <div class="donut"></div>
+                    <div class="donut" style="background: ${paymentAnalytics.ringStyle}"></div>
                     <strong>Collection Status</strong>
                     <span>Due vs Paid</span>
                 </div>
-                <div class="quick-filter-card overdue"><strong>${stats['Due Payments']}</strong><span>Overdue / Due</span></div>
-                <div class="quick-filter-card paid"><strong>${stats['Completed Complaints']}</strong><span>Completed Work</span></div>
-                <div class="quick-filter-card review"><strong>${stats['Pending Visitors']}</strong><span>For Review</span></div>
-                <div class="quick-filter-card pending"><strong>${stats['Open Complaints']}</strong><span>Open Maintenance</span></div>
+                <div class="quick-filter-card overdue"><strong>Rs. ${paymentAnalytics.dueAmount}</strong><span>Overdue / Due (${paymentAnalytics.dueCount} bills)</span></div>
+                <div class="quick-filter-card paid"><strong>Rs. ${paymentAnalytics.paidAmount}</strong><span>Total Paid (${paymentAnalytics.paidCount} bills)</span></div>
+                <div class="quick-filter-card review"><strong>${stats['Pending Visitors']}</strong><span>Visitors For Review</span></div>
+                <div class="quick-filter-card pending"><strong>${stats['Open Complaints']}</strong><span>Open Maintenance Tasks</span></div>
             </aside>
         </div>
     </section>
@@ -137,7 +143,21 @@
         <div class="table-wrap"><table>
             <thead><tr><th>Photo</th><th>Flat</th><th>Resident</th><th>Issue</th><th>Description</th><th>Status</th><th>Assign Staff</th></tr></thead>
             <tbody><c:forEach items="${complaints}" var="complaint"><tr>
-                <td data-label="Photo"><c:choose><c:when test="${not empty complaint.photoUrl}"><img class="thumb" src="${complaint.photoUrl}" alt="Complaint photo"></c:when><c:otherwise><span class="empty-photo">No photo</span></c:otherwise></c:choose></td>
+                <td data-label="Photo">
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <c:choose>
+                            <c:when test="${not empty complaint.photoUrl}">
+                                <img class="thumb" src="${complaint.photoUrl}" alt="Complaint photo" title="Resident attached photo">
+                            </c:when>
+                            <c:otherwise>
+                                <span class="empty-photo">No photo</span>
+                            </c:otherwise>
+                        </c:choose>
+                        <c:if test="${not empty complaint.completionPhotoUrl}">
+                            <img class="thumb" src="${complaint.completionPhotoUrl}" alt="Completion photo" title="Staff completion proof" style="border-color: var(--success);">
+                        </c:if>
+                    </div>
+                </td>
                 <td data-label="Flat"><strong>${complaint.flatNumber}</strong></td>
                 <td data-label="Resident">${complaint.residentName}</td>
                 <td data-label="Issue">${complaint.title}</td>

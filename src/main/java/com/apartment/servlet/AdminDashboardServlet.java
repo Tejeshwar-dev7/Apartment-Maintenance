@@ -29,6 +29,10 @@ public class AdminDashboardServlet extends HttpServlet {
         try {
             request.setAttribute("announcements", announcementDao.findLatest());
             request.setAttribute("stats", adminDao.dashboardStats());
+            request.setAttribute("paymentAnalytics", adminDao.paymentAnalytics());
+            request.setAttribute("occupancyAnalytics", adminDao.occupancyAnalytics());
+            request.setAttribute("complaintStatusAnalytics", adminDao.complaintStatusAnalytics());
+            request.setAttribute("complaintCategoryAnalytics", adminDao.complaintCategoryAnalytics());
             request.setAttribute("complaints", complaintDao.findAll());
             request.setAttribute("visitors", visitorDao.findAll());
             request.setAttribute("payments", paymentDao.findAll());

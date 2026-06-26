@@ -58,7 +58,21 @@ public class ComplaintServlet extends HttpServlet {
             throw new IOException("Unable to create upload directory");
         }
 
-        photo.write(new File(uploadDirectory, fileName).getAbsolutePath());
+        File targetFile = new File(uploadDirectory, fileName);
+        try (java.io.InputStream input = photo.getInputStream()) {
+            java.nio.file.Files.copy(input, targetFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        // Also save to source directory if possible, so that it persists during redeployments
+        String sourceUploadPath = "C:\\Users\\tejes\\OneDrive\\Documents\\Apartment Maintenance Management System\\src\\main\\webapp\\uploads\\complaints";
+        File sourceUploadDir = new File(sourceUploadPath);
+        if (sourceUploadDir.exists() || sourceUploadDir.mkdirs()) {
+            File sourceTarget = new File(sourceUploadDir, fileName);
+            try (java.io.InputStream input2 = photo.getInputStream()) {
+                java.nio.file.Files.copy(input2, sourceTarget.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception ignored) {}
+        }
+
         return request.getContextPath() + "/uploads/complaints/" + fileName;
     }
 }
