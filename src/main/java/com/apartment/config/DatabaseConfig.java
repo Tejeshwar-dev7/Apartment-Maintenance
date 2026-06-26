@@ -12,10 +12,9 @@ public final class DatabaseConfig {
 
     static {
         try (InputStream input = DatabaseConfig.class.getClassLoader().getResourceAsStream("db.properties")) {
-            if (input == null) {
-                throw new IllegalStateException("Missing db.properties. Copy db.properties.example and update credentials.");
+            if (input != null) {
+                PROPERTIES.load(input);
             }
-            PROPERTIES.load(input);
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (IOException | ClassNotFoundException exception) {
             throw new ExceptionInInitializerError(exception);
@@ -38,6 +37,12 @@ public final class DatabaseConfig {
         }
         if (password == null || password.trim().isEmpty()) {
             password = PROPERTIES.getProperty("db.password");
+        }
+
+        if (url == null || url.trim().isEmpty()
+                || username == null || username.trim().isEmpty()
+                || password == null || password.trim().isEmpty()) {
+            throw new SQLException("Database connection is not configured. Set DB_URL, DB_USERNAME, and DB_PASSWORD, or provide db.properties.");
         }
 
         return DriverManager.getConnection(url, username, password);
