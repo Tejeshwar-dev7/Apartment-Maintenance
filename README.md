@@ -2,6 +2,16 @@
 
 A resume-ready Java web application for apartment operations. It replaces scattered WhatsApp messages with role-based workflows for complaints, visitors and maintenance payments.
 
+## Live Website
+
+This project is ready to deploy for free on Render using the included `Dockerfile` and `render.yaml`.
+
+After deploying, add your Render URL here:
+
+```text
+https://your-render-service.onrender.com
+```
+
 ## Tech Stack
 
 - Java 17
@@ -67,6 +77,26 @@ mvn clean package
 ```text
 http://localhost:8080/apartment-maintenance
 ```
+
+## Deploy Free on Render
+
+1. Push this repository to GitHub.
+2. Create a free MySQL database from any MySQL-compatible provider.
+3. Import `database/schema.sql` into that database.
+4. Go to Render, choose **New +** -> **Blueprint**, and connect this GitHub repository.
+5. Render will detect `render.yaml` and create the `apartment-maintenance` web service.
+6. Add these environment variables in Render:
+
+```text
+DB_URL=jdbc:mysql://YOUR_HOST:3306/YOUR_DATABASE?useSSL=true&serverTimezone=UTC
+DB_USERNAME=YOUR_DATABASE_USER
+DB_PASSWORD=YOUR_DATABASE_PASSWORD
+```
+
+7. Deploy the service and open the Render URL.
+8. In GitHub, open repository **Settings** -> **General** -> **About** and paste the Render URL into **Website**.
+
+The Docker deployment publishes the app at the root path, so the live site opens directly from the Render URL.
 
 ## Demo Accounts
 

@@ -1,0 +1,6 @@
+target/
+.git/
+.agents/
+src/main/resources/db.properties
+*.class
+*.log
