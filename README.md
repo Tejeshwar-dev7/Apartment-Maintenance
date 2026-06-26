@@ -9,7 +9,7 @@ This project is ready to deploy for free on Render using the included `Dockerfil
 After deploying, add your Render URL here:
 
 ```text
-https://your-render-service.onrender.com
+https://apartment-maintenance-clg9.onrender.com
 ```
 
 ## Tech Stack
