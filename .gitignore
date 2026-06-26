@@ -1,0 +1,5 @@
+target/
+.tmp-classes/
+src/main/resources/db.properties
+*.class
+*.log
