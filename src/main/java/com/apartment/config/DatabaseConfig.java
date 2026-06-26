@@ -26,10 +26,20 @@ public final class DatabaseConfig {
     }
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(
-                PROPERTIES.getProperty("db.url"),
-                PROPERTIES.getProperty("db.username"),
-                PROPERTIES.getProperty("db.password")
-        );
+        String url = System.getenv("DB_URL");
+        String username = System.getenv("DB_USERNAME");
+        String password = System.getenv("DB_PASSWORD");
+
+        if (url == null || url.trim().isEmpty()) {
+            url = PROPERTIES.getProperty("db.url");
+        }
+        if (username == null || username.trim().isEmpty()) {
+            username = PROPERTIES.getProperty("db.username");
+        }
+        if (password == null || password.trim().isEmpty()) {
+            password = PROPERTIES.getProperty("db.password");
+        }
+
+        return DriverManager.getConnection(url, username, password);
     }
 }
