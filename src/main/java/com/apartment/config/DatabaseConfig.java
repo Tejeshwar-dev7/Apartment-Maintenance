@@ -39,10 +39,18 @@ public final class DatabaseConfig {
             password = PROPERTIES.getProperty("db.password");
         }
 
+        if (url != null && url.startsWith("mysql://")) {
+            url = "jdbc:" + url;
+        }
+
         if (url == null || url.trim().isEmpty()
                 || username == null || username.trim().isEmpty()
                 || password == null || password.trim().isEmpty()) {
             throw new SQLException("Database connection is not configured. Set DB_URL, DB_USERNAME, and DB_PASSWORD, or provide db.properties.");
+        }
+
+        if (url.contains("DATABASE_HOST") || url.contains("DATABASE_NAME")) {
+            throw new SQLException("Database URL still contains placeholder values. Replace DATABASE_HOST and DATABASE_NAME with your real online MySQL details.");
         }
 
         return DriverManager.getConnection(url, username, password);
