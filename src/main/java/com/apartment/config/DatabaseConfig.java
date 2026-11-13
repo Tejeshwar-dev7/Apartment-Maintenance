@@ -16,6 +16,7 @@ public final class DatabaseConfig {
                 PROPERTIES.load(input);
             }
             Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.postgresql.Driver");
         } catch (IOException | ClassNotFoundException exception) {
             throw new ExceptionInInitializerError(exception);
         }

@@ -81,15 +81,15 @@ public class ComplaintDao {
 
     public void assign(int complaintId, int staffId) throws SQLException {
         String sql = """
-                UPDATE complaints c
-                JOIN users s ON s.id = ? AND s.role = 'STAFF'
-                SET c.assigned_staff_id = s.id, c.status = 'ASSIGNED'
-                WHERE c.id = ?
+                UPDATE complaints
+                SET assigned_staff_id = ?, status = 'ASSIGNED'
+                WHERE id = ? AND EXISTS (SELECT 1 FROM users WHERE id = ? AND role = 'STAFF')
                 """;
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, staffId);
             statement.setInt(2, complaintId);
+            statement.setInt(3, staffId);
             statement.executeUpdate();
         }
     }

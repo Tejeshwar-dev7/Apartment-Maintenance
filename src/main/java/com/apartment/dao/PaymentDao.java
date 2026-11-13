@@ -51,37 +51,39 @@ public class PaymentDao {
             sql = """
                     INSERT INTO maintenance_payments (flat_id, due_month, amount, description, status)
                     SELECT id, ?, ?, ?, 'DUE' FROM flats
-                    ON DUPLICATE KEY UPDATE amount = VALUES(amount), description = VALUES(description)
                     """;
         } else {
             sql = """
                     INSERT INTO maintenance_payments (flat_id, due_month, amount, description, status)
                     VALUES (?, ?, ?, ?, 'DUE')
-                    ON DUPLICATE KEY UPDATE amount = VALUES(amount), description = VALUES(description)
                     """;
         }
-        try (Connection connection = DatabaseConfig.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            if (flatId == null) {
-                statement.setString(1, dueMonth);
-                statement.setBigDecimal(2, amount);
-                statement.setString(3, description);
-            } else {
-                statement.setInt(1, flatId);
-                statement.setString(2, dueMonth);
-                statement.setBigDecimal(3, amount);
-                statement.setString(4, description);
+        try (Connection connection = DatabaseConfig.getConnection()) {
+            String upsert = "PostgreSQL".equals(connection.getMetaData().getDatabaseProductName())
+                    ? "ON CONFLICT (flat_id, due_month) DO UPDATE SET amount = EXCLUDED.amount, description = EXCLUDED.description"
+                    : "ON DUPLICATE KEY UPDATE amount = VALUES(amount), description = VALUES(description)";
+            try (PreparedStatement statement = connection.prepareStatement(sql + upsert)) {
+                if (flatId == null) {
+                    statement.setString(1, dueMonth);
+                    statement.setBigDecimal(2, amount);
+                    statement.setString(3, description);
+                } else {
+                    statement.setInt(1, flatId);
+                    statement.setString(2, dueMonth);
+                    statement.setBigDecimal(3, amount);
+                    statement.setString(4, description);
+                }
+                statement.executeUpdate();
             }
-            statement.executeUpdate();
         }
     }
 
     public void markPaid(int paymentId, int residentId) throws SQLException {
         String sql = """
                 UPDATE maintenance_payments p
-                JOIN users u ON p.flat_id = u.flat_id
-                SET p.status = 'PAID', p.transaction_id = ?, p.paid_on = CURRENT_DATE
-                WHERE p.id = ? AND u.id = ? AND p.status = 'DUE'
+                SET status = 'PAID', transaction_id = ?, paid_on = CURRENT_DATE
+                WHERE p.id = ? AND EXISTS (SELECT 1 FROM users u WHERE u.id = ? AND u.flat_id = p.flat_id)
+                  AND p.status = 'DUE'
                 """;
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
